@@ -133,13 +133,13 @@ def main():
     for epoch in range(args.epochs):
         train(model, device, train_loader, optimizer, epoch)
         test(model, device, test_loader)
-        params.append(model.k)
+        params.append(model.k.detach().numpy())
         scheduler.step()
     torch.save(model.state_dict(), "mnist_cnn.pt")
     print(params)
     prms = []
     for prm in zip(*params):
-        prms.append([p.detach().numpy() for p in prm])
+        prms.append([p for p in prm])
 
     fig, ax = plt.subplots(nrows=2, ncols=2)
     for i, row in enumerate(ax):
