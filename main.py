@@ -155,14 +155,16 @@ def main():
     fig = plt.figure()
     fig.tight_layout()
     plt.subplot(1, 2, 1)
-    plt.ylabel("Test loss")
+    #plt.ylabel("Test loss")
     plt.xlabel("Epochs")
-    plt.plot(range(args.epochs), losses)
+    plt.plot(range(args.epochs), losses, label='loss')
+    plt.legend()
 
     plt.subplot(1, 2, 2)
-    plt.ylabel("Test accuracy")
+    #plt.ylabel("Test accuracy")
     plt.xlabel("Epochs")
-    plt.plot(range(args.epochs), accs)
+    plt.plot(range(args.epochs), accs, label='acc')
+    plt.legend()
 
     plt.savefig("history_" + args.plot_file)
 
@@ -175,9 +177,10 @@ def main():
     fig.tight_layout()
     for i, row in enumerate(ax):
         for j, col in enumerate(row):
-            col.set_ylabel("k"+str(2*i+j))
+            #col.set_ylabel("k"+str(2*i+j))
             col.set_xlabel("Epochs")
-            col.plot(range(args.epochs), prms[2*i+j])
+            col.plot(range(args.epochs), prms[2*i+j], label="k"+str(2*i+j))
+            col.legend()
 
     plt.savefig("parameter_" + args.plot_file)
 
