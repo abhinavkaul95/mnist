@@ -133,7 +133,7 @@ def main():
     for epoch in range(args.epochs):
         train(model, device, train_loader, optimizer, epoch)
         test(model, device, test_loader)
-        params.append(model.k.detach().numpy())
+        params.append(model.k.detach().cpu().numpy())
         scheduler.step()
     torch.save(model.state_dict(), "mnist_cnn.pt")
     print(params)
