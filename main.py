@@ -9,12 +9,9 @@ from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 from matplotlib import pyplot as plt
 import logging
+
 act_deg = 3
-root_logger= logging.getLogger()
-root_logger.setLevel(logging.DEBUG) # or whatever
-handler = logging.FileHandler('test.log', 'w', 'utf-8') # or whatever
-handler.setFormatter(logging.Formatter('%(name)s %(message)s')) # or whatever
-root_logger.addHandler(handler)
+
 print = logging.info
 class Net(nn.Module):
     def __init__(self):
@@ -78,25 +75,38 @@ def test(model, device, test_loader):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-
+    test_acc = 100. * correct / len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
-    return test_loss
+        test_loss, correct, len(test_loader.dataset), test_acc))
+    return test_loss, test_acc
 
 
 def main():
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
     parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                        help='input batch size for training (default: 64)')
+                        help='input batch size for training')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
+                        help='input batch size for testing')
     parser.add_argument('--epochs', type=int, default=14, metavar='N',
-                        help='number of epochs to train (default: 14)')
+                        help='number of epochs to train')
     parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
-                        help='learning rate (default: 1.0)')
+                        help='learning rate')
+    parser.add_argument('--log-file', type=str, default="test.log",
+                        help='log file')
+    parser.add_argument('--checkpoint-file', type=str, default="mnist_cnn.pt",
+                        help='checkpoint file')
+    parser.add_argument('--plot-file', type=str, default="plot.png",
+                        help='plot file')
     args = parser.parse_args()
     torch.manual_seed(1)
+
+    root_logger= logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(args.log_file, 'w', 'utf-8') 
+    handler.setFormatter(logging.Formatter('%(message)s'))
+    root_logger.addHandler(handler)
+
+    logging.getLogger('matplotlib.font_manager').disabled = True
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -121,8 +131,8 @@ def main():
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
     model = Net().to(device)
-    if os.path.exists("mnist_cnn.pt"):
-        model.load_state_dict(torch.load("mnist_cnn.pt"))
+    if os.path.exists(args.checkpoint_file):
+        model.load_state_dict(torch.load(args.checkpoint_file))
         test(model, device, test_loader)
         return
         
@@ -130,23 +140,39 @@ def main():
 
     scheduler = StepLR(optimizer, step_size=1, gamma=0.7)
     params = []
+    losses = []
+    accs = []
     for epoch in range(args.epochs):
         train(model, device, train_loader, optimizer, epoch)
-        test(model, device, test_loader)
+        test_loss, test_acc = test(model, device, test_loader)
+        losses.append(test_loss)
+        accs.append(test_acc)
         params.append(model.k.detach().cpu().numpy())
         scheduler.step()
-    torch.save(model.state_dict(), "mnist_cnn.pt")
-    print(params)
+    torch.save(model.state_dict(), args.checkpoint_file)
+
+   
+    plt.figure()
+
+    plt.subplot(1, 2, 1)
+    plt.plot(range(args.epochs), losses)
+
+    plt.subplot(1, 2, 2)
+    plt.plot(range(args.epochs), accs)
+
+    plt.savefig("history_" + args.plot_file)
+
+    print(params[-1])
     prms = []
     for prm in zip(*params):
         prms.append([p for p in prm])
-
-    fig, ax = plt.subplots(nrows=2, ncols=2)
+    side_of_plots = (act_deg + 1)//2
+    _, ax = plt.subplots(nrows=side_of_plots, ncols=side_of_plots)
     for i, row in enumerate(ax):
         for j, col in enumerate(row):
             col.plot(range(args.epochs), prms[2*i+j])
 
-    plt.savefig("plot.png")
+    plt.savefig("parameter_" + args.plot_file)
 
 
 
