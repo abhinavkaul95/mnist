@@ -155,9 +155,13 @@ def main():
     plt.figure()
 
     plt.subplot(1, 2, 1)
+    plt.xlabel("Test loss")
+    plt.ylabel("Epochs")
     plt.plot(range(args.epochs), losses)
 
     plt.subplot(1, 2, 2)
+    plt.xlabel("Test accuracy")
+    plt.ylabel("Epochs")
     plt.plot(range(args.epochs), accs)
 
     plt.savefig("history_" + args.plot_file)
@@ -170,6 +174,8 @@ def main():
     _, ax = plt.subplots(nrows=side_of_plots, ncols=side_of_plots)
     for i, row in enumerate(ax):
         for j, col in enumerate(row):
+            col.set_xlabel("k"+str(2*i+j))
+            col.set_ylabel("Epochs")
             col.plot(range(args.epochs), prms[2*i+j])
 
     plt.savefig("parameter_" + args.plot_file)
